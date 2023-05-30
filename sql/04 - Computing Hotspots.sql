@@ -57,3 +57,37 @@ AS (
         cartobq.docs.madrid_bike_accidents_h3
     )) AS getis_ord
 );
+
+
+-- Finding joint or disjoint hotspots
+CREATE TABLE `<PROJECT>.<DATASET>.madrid_bike_accidents_vs_index`
+CLUSTER BY (h3)
+AS (
+  WITH
+    gi_grid AS (
+      SELECT
+        h3,
+        ind.gi AS index_gi,
+        acc.gi AS acc_gi
+      FROM
+        (
+          SELECT * FROM cartobq.docs.madrid_bike_index_gi
+          WHERE p_value < 0.001
+        ) AS ind
+      FULL OUTER JOIN
+        (
+          SELECT * FROM cartobq.docs.madrid_bike_index_gi
+          WHERE p_value < 0.001
+        ) AS acc
+      USING (h3)
+    )
+  SELECT
+    h3,
+    CASE
+      WHEN index_gi IS NOT NULL AND acc_gi IS NOT NULL THEN 'both'
+      WHEN index_gi IS NOT NULL THEN 'index'
+      WHEN acc_gi IS NOT NULL THEN 'accidents'
+      ELSE 'none'
+    END AS high_levels
+  FROM gi_grid
+)
