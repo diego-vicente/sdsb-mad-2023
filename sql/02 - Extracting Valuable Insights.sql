@@ -56,7 +56,7 @@ CALL `carto-un`.carto.CREATE_ISOLINES(
 );
 
 
--- Enter spatial indices
+-- Enter spatial indexes
 CREATE TABLE <PROJECT>.<DATASET>.madrid_h3_10
 CLUSTER BY (h3)
 AS (
