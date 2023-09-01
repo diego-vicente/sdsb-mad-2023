@@ -1,11 +1,11 @@
--- Starting with a basic SELECT
+-- @block Starting with a basic SELECT
 SELECT
   * EXCEPT (geom)
 FROM
   cartobq.docs.madrid_districts;
 
 
--- Adding new features
+-- @block Adding new features
 SELECT
   name,
   area,
@@ -19,7 +19,7 @@ FROM
   cartobq.docs.madrid_districts;
 
 
--- Using Common Table Expressions
+-- @block Using Common Table Expressions
 WITH
   m30_cte AS (
     SELECT
@@ -41,7 +41,7 @@ FROM
   m30_cte;
 
 
--- Basics of grouping
+-- @block Basics of grouping
 WITH
   m30_cte AS (
     SELECT
@@ -67,7 +67,7 @@ ORDER BY
   total_area DESC;
 
 
--- Basics of filtering
+-- @block Basics of filtering
 WITH
   m30_cte AS (
     SELECT
@@ -95,7 +95,7 @@ HAVING
   n_districts > 2;
 
 
--- Using window functions
+-- @block Using window functions
 WITH
   m30_cte AS (
     SELECT
@@ -127,7 +127,7 @@ ORDER BY
   m30_ranking DESC;
 
 
--- Working with arrays (I)
+-- @block Working with arrays (I)
 SELECT
   name,
   SPLIT(name, ' ') AS words
@@ -135,7 +135,7 @@ FROM
   cartobq.docs.madrid_districts;
 
 
--- Working with arrays (II)
+-- @block Working with arrays (II)
 WITH
   words_cte AS (
     SELECT

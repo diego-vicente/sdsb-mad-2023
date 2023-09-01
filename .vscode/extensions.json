@@ -1,0 +1,6 @@
+{
+    "recommendations": [
+        "mtxr.sqltools",
+        "evidence.sqltools-bigquery-driver"
+    ]
+}

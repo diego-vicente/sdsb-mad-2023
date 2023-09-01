@@ -1,4 +1,4 @@
--- Get accidents within the hotspots' k-ring
+-- @block Get accidents within the hotspots' k-ring
 SELECT
   id,
   date,
@@ -22,19 +22,18 @@ WHERE
   )
 
 
--- Compute the isolines for BiciMad stations
+-- @block Compute the isolines for BiciMad stations
 CALL `carto-un`.carto.CREATE_ISOLINES(
-  '<API_ENDPOINT>',
-  '<LDS_TOKEN>',
+  '$api_endpoint',
+  '$lds_token',
   'cartobq.docs.madrid_bicimad_stations',
-  '<PROJECT>.<DATASET>.madrid_bicimad_coverage_areas',
+  '$project.$dataset.madrid_bicimad_coverage_areas',
   'geom',
   'walk', 15 * 60, 'time',
   NULL
 );
 
--- Consolidate into a single area
-CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bicimad_coverage_area`
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bicimad_coverage_area`
 AS (
   SELECT
     ST_UNION_AGG(geom) AS geom
@@ -42,8 +41,8 @@ AS (
     `cartobq.docs.madrid_bicimad_coverage_areas`
 );
 
--- Find the best spots for new BiciMad stations outside of the coverage area
-CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bicimad_candidates`
+-- @block Find the best spots for new BiciMad stations
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bicimad_candidates`
 CLUSTER BY h3
 AS (
   SELECT
@@ -54,7 +53,12 @@ AS (
     p_value < 0.00001 
     AND gi >= 10
     AND NOT ST_INTERSECTS(
-      (SELECT geom FROM `cartobq.docs.madrid_bicimad_coverage_area`),
+      (
+        SELECT 
+          geom 
+        FROM 
+          `cartobq.docs.madrid_bicimad_coverage_area`
+      ),
       `carto-un`.carto.H3_BOUNDARY(h3)
     )
 );

@@ -1,5 +1,5 @@
--- Consolidating all infrastructure
-CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bike_all_infrastructure`
+-- @block Consolidating all infrastructure
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_all_infrastructure`
 CLUSTER BY (geom)
 AS (
   WITH
@@ -34,30 +34,30 @@ AS (
 );
 
 
--- Find nearby bike parkings
+-- @block Find nearby bike parkings
 CALL `carto-un`.carto.CREATE_ISOLINES(
-  '<API_ENDPOINT>',
-  '<LDS_TOKEN>',
+  '$api_endpoint',
+  '$lds_token',
   'cartobq.docs.madrid_bike_parkings',
-  '<PROJECT>.<DATASET>.madrid_bike_parkings_5min',
+  '$project.$dataset.madrid_bike_parkings_5min',
   'geom',
   'walk', 5 * 60, 'time',
   NULL
 );
 
 CALL `carto-un`.carto.CREATE_ISOLINES(
-  '<API_ENDPOINT>',
-  '<LDS_TOKEN>',
+  '$api_endpoint',
+  '$lds_token',
   'cartobq.docs.madrid_bike_parkings',
-  '<PROJECT>.<DATASET>.madrid_bike_parkings_10min',
+  '$project.$dataset.madrid_bike_parkings_10min',
   'geom',
   'walk', 10 * 60, 'time',
   NULL
 );
 
 
--- Enter spatial indexes
-CREATE TABLE <PROJECT>.<DATASET>.madrid_h3_10
+-- @block Enter spatial indexes
+CREATE TABLE $project.$dataset.madrid_h3_10
 CLUSTER BY (h3)
 AS (
   SELECT h3 FROM UNNEST (
@@ -69,7 +69,7 @@ AS (
 );
 
 
--- Enrich the grid using points
+-- @block Enrich the grid using points
 CALL `carto-un`.carto.ENRICH_GRID(
   -- Index type
   'h3',
@@ -79,18 +79,16 @@ CALL `carto-un`.carto.ENRICH_GRID(
   ''',
   'h3',
   -- Input query and name of the geometry column
-  '''
-  SELECT id, geom FROM cartobq.docs.madrid_bike_parkings
-  ''',
+  'SELECT id, geom FROM cartobq.docs.madrid_bike_parkings',
   'geom',
   -- Columns to enrich and aggregation function
   [('id', 'count')],
   -- Output table
-  ['`<PROJECT>.<DATASET>.madrid_bike_parkings_h3`']
+  ['$project.$dataset.madrid_bike_parkings_h3']
 );
 
 
--- Enrich the grid using lines
+-- @block Enrich the grid using lines
 CALL `carto-un`.carto.ENRICH_GRID(
   -- Index type
   'h3',
@@ -108,11 +106,11 @@ CALL `carto-un`.carto.ENRICH_GRID(
   -- Columns to enrich and aggregation function
   [('lane_level', 'sum')],
   -- Output table
-  ['`<PROJECT>.<DATASET>.madrid_bike_lane_level_h3`']
+  ['$project.$dataset.madrid_bike_lane_level_h3']
 );
 
 
--- Enrich the grid using polygons
+-- @block Enrich the grid using polygons
 CALL `carto-un`.carto.ENRICH_GRID_RAW(
   -- Index type
   'h3',
@@ -128,10 +126,10 @@ CALL `carto-un`.carto.ENRICH_GRID_RAW(
   ''',
   'geom', ['placeholder'],
   -- Output table
-  ['`<PROJECT>.<DATASET>.madrid_bike_parkings_5min_h3`']
+  ['$project.$dataset.madrid_bike_parkings_5min_h3']
 );
 
-CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bike_parkings_5min_h3`
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_parkings_5min_h3`
 CLUSTER BY (h3)
 AS (
   WITH
@@ -164,10 +162,10 @@ CALL `carto-un`.carto.ENRICH_GRID_RAW(
   ''',
   'geom', ['placeholder'],
   -- Output table
-  ['`<PROJECT>.<DATASET>.madrid_bike_parkings_10min_h3`']
+  ['`$project.$dataset.madrid_bike_parkings_10min_h3`']
 );
 
-CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bike_parkings_10min_h3`
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_parkings_10min_h3`
 CLUSTER BY (h3)
 AS (
   WITH
@@ -186,12 +184,12 @@ AS (
 );
 
 
--- Enrich the grid using raster
+-- @block Enrich the grid using raster
 CALL `carto-un`.carto.RASTER_ST_GETVALUE(
     'cartobq.docs.madrid_bike_nasadem',
     (SELECT geom FROM cartobq.docs.madrid_city_boundaries),
     NULL,
-    '<PROJECT>.<DATASET>.madrid_bike_nasadem_quadbin'
+    '$project.$dataset.madrid_bike_nasadem_quadbin'
 );
 
 
@@ -213,7 +211,7 @@ CALL `carto-un`.carto.ENRICH_GRID(
   ''',
   'geom',
   [('elevation', 'avg'), ('elevation', 'min'), ('elevation', 'max')],
-  ['`<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod0`']
+  ['`$project.$dataset.madrid_bike_nasadem_h3_mod0`']
 );
 
 CALL `carto-un`.carto.ENRICH_GRID(
@@ -234,7 +232,7 @@ CALL `carto-un`.carto.ENRICH_GRID(
   ''',
   'geom',
   [('elevation', 'avg'), ('elevation', 'min'), ('elevation', 'max')],
-  ['`<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod1`']
+  ['`$project.$dataset.madrid_bike_nasadem_h3_mod1`']
 );
 
 CALL `carto-un`.carto.ENRICH_GRID(
@@ -255,25 +253,25 @@ CALL `carto-un`.carto.ENRICH_GRID(
   ''',
   'geom',
   [('elevation', 'avg'), ('elevation', 'min'), ('elevation', 'max')],
-  ['`<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod2`']
+  ['`$project.$dataset.madrid_bike_nasadem_h3_mod2`']
 );
 
-CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3`
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_nasadem_h3`
 CLUSTER BY h3
 AS (
-  SELECT * FROM `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod0`
+  SELECT * FROM `$project.$dataset.madrid_bike_nasadem_h3_mod0`
   UNION ALL
-  SELECT * FROM `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod1`
+  SELECT * FROM `$project.$dataset.madrid_bike_nasadem_h3_mod1`
   UNION ALL
-  SELECT * FROM `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod2`
+  SELECT * FROM `$project.$dataset.madrid_bike_nasadem_h3_mod2`
 );
 
-DROP TABLE `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod0`;
-DROP TABLE `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod1`;
-DROP TABLE `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod2`;
+DROP TABLE `$project.$dataset.madrid_bike_nasadem_h3_mod0`;
+DROP TABLE `$project.$dataset.madrid_bike_nasadem_h3_mod1`;
+DROP TABLE `$project.$dataset.madrid_bike_nasadem_h3_mod2`;
 
 
-CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bike_elevation_h3`
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_elevation_h3`
 CLUSTER BY h3
 AS (
   WITH

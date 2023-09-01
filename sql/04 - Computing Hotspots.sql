@@ -1,4 +1,4 @@
--- Snap accidents to the H3 grid
+-- @block Snap accidents to the H3 grid
 CALL `carto-un`.carto.ENRICH_GRID(
   'h3',
   '''
@@ -15,12 +15,12 @@ CALL `carto-un`.carto.ENRICH_GRID(
   ''',
   'geom',
   [('n_involved', 'sum'), ('accident', 'count'), ('max_severity', 'avg')],
-  ['`<PROJECT>.<DATASET>.madrid_bike_accidents_h3`']
+  ['`$project.$dataset.madrid_bike_accidents_h3`']
 );
 
 
--- Computing Getis-Ord
-CREATE TABLE `<PROJECT>.<DATASET>.madrid_bike_index_gi`
+-- @block Computing Getis-Ord
+CREATE TABLE `$project.$dataset.madrid_bike_index_gi`
 CLUSTER BY (h3)
 AS (
   SELECT
@@ -39,7 +39,7 @@ AS (
     )) AS getis_ord
 );
 
-CREATE TABLE `<PROJECT>.<DATASET>.madrid_bike_accidents_gi`
+CREATE TABLE `$project.$dataset.madrid_bike_accidents_gi`
 CLUSTER BY (h3)
 AS (
   SELECT
@@ -59,8 +59,8 @@ AS (
 );
 
 
--- Finding joint or disjoint hotspots
-CREATE TABLE `<PROJECT>.<DATASET>.madrid_bike_accidents_vs_index`
+-- @block Finding joint or disjoint hotspots
+CREATE TABLE `$project.$dataset.madrid_bike_accidents_vs_index`
 CLUSTER BY (h3)
 AS (
   WITH

@@ -1,5 +1,5 @@
--- Now, all at once
-CREATE TABLE `<PROJECT>.<DATASET>.madrid_bike_variables_h3`
+-- @block Now, all at once
+CREATE TABLE `$project.$dataset.madrid_bike_variables_h3`
 CLUSTER BY (h3)
 AS (
   SELECT
@@ -26,7 +26,7 @@ CALL `carto-un`.carto.CREATE_SPATIAL_COMPOSITE_UNSUPERVISED(
   -- Unique index
   'h3',
   -- Output table name
-  '<PROJECT>.<DATASET>.madrid_bike_index_h3',
+  '$project.$dataset.madrid_bike_index_h3',
   -- Options
   '''
   {
