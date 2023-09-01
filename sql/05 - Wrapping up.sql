@@ -20,3 +20,41 @@ WHERE
     WHERE
       high_levels = 'accidents'
   )
+
+
+-- Compute the isolines for BiciMad stations
+CALL `carto-un`.carto.CREATE_ISOLINES(
+  '<API_ENDPOINT>',
+  '<LDS_TOKEN>',
+  'cartobq.docs.madrid_bicimad_stations',
+  '<PROJECT>.<DATASET>.madrid_bicimad_coverage_areas',
+  'geom',
+  'walk', 15 * 60, 'time',
+  NULL
+);
+
+-- Consolidate into a single area
+CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bicimad_coverage_area`
+AS (
+  SELECT
+    ST_UNION_AGG(geom) AS geom
+  FROM
+    `cartobq.docs.madrid_bicimad_coverage_areas`
+);
+
+-- Find the best spots for new BiciMad stations outside of the coverage area
+CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bicimad_candidates`
+CLUSTER BY h3
+AS (
+  SELECT
+    h3
+  FROM 
+    cartobq.docs.madrid_bike_index_gi_sept
+  WHERE
+    p_value < 0.00001 
+    AND gi >= 10
+    AND NOT ST_INTERSECTS(
+      (SELECT geom FROM `cartobq.docs.madrid_bicimad_coverage_area`),
+      `carto-un`.carto.H3_BOUNDARY(h3)
+    )
+);

@@ -184,3 +184,128 @@ AS (
     covered_area / total_area AS covered_percentage
   FROM areas_cte
 );
+
+
+-- Enrich the grid using raster
+CALL `carto-un`.carto.RASTER_ST_GETVALUE(
+    'cartobq.docs.madrid_bike_nasadem',
+    (SELECT geom FROM cartobq.docs.madrid_city_boundaries),
+    NULL,
+    '<PROJECT>.<DATASET>.madrid_bike_nasadem_quadbin'
+);
+
+
+CALL `carto-un`.carto.ENRICH_GRID(
+  'h3',
+  R'''
+  SELECT 
+    h3 
+  FROM cartobq.docs.madrid_h3_10
+    WHERE MOD(`carto-un`.carto.H3_STRING_TOINT(h3), 3) = 0
+  ''',
+  'h3',
+  R'''
+    SELECT
+      `carto-un`.carto.QUADBIN_BOUNDARY(quadbin) AS geom,
+      band_1_int16 AS elevation
+    FROM
+      `cartobq.docs.madrid_bike_nasadem_quadbin`
+  ''',
+  'geom',
+  [('elevation', 'avg'), ('elevation', 'min'), ('elevation', 'max')],
+  ['`<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod0`']
+);
+
+CALL `carto-un`.carto.ENRICH_GRID(
+  'h3',
+  R'''
+  SELECT 
+    h3 
+  FROM cartobq.docs.madrid_h3_10
+    WHERE MOD(`carto-un`.carto.H3_STRING_TOINT(h3), 3) = 1
+  ''',
+  'h3',
+  R'''
+    SELECT
+      `carto-un`.carto.QUADBIN_BOUNDARY(quadbin) AS geom,
+      band_1_int16 AS elevation
+    FROM
+      `cartobq.docs.madrid_bike_nasadem_quadbin`
+  ''',
+  'geom',
+  [('elevation', 'avg'), ('elevation', 'min'), ('elevation', 'max')],
+  ['`<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod1`']
+);
+
+CALL `carto-un`.carto.ENRICH_GRID(
+  'h3',
+  R'''
+  SELECT 
+    h3 
+  FROM cartobq.docs.madrid_h3_10
+    WHERE MOD(`carto-un`.carto.H3_STRING_TOINT(h3), 3) = 2
+  ''',
+  'h3',
+  R'''
+    SELECT
+      `carto-un`.carto.QUADBIN_BOUNDARY(quadbin) AS geom,
+      band_1_int16 AS elevation
+    FROM
+      `cartobq.docs.madrid_bike_nasadem_quadbin`
+  ''',
+  'geom',
+  [('elevation', 'avg'), ('elevation', 'min'), ('elevation', 'max')],
+  ['`<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod2`']
+);
+
+CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3`
+CLUSTER BY h3
+AS (
+  SELECT * FROM `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod0`
+  UNION ALL
+  SELECT * FROM `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod1`
+  UNION ALL
+  SELECT * FROM `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod2`
+);
+
+DROP TABLE `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod0`;
+DROP TABLE `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod1`;
+DROP TABLE `<PROJECT>.<DATASET>.madrid_bike_nasadem_h3_mod2`;
+
+
+CREATE OR REPLACE TABLE `<PROJECT>.<DATASET>.madrid_bike_elevation_h3`
+CLUSTER BY h3
+AS (
+  WITH
+    kring_cte AS (
+      SELECT
+        *,
+        `carto-un`.carto.H3_KRING(h3, 2) AS neighbors
+      FROM
+        `cartobq.docs.madrid_bike_nasadem_h3`
+    ),
+    smoothing_cte AS (
+      SELECT
+        kring_cte.h3,
+        APPROX_QUANTILES(kring.elevation_min, 2)[OFFSET(1)] AS elevation_min,
+        APPROX_QUANTILES(kring.elevation_avg, 2)[OFFSET(1)] AS elevation_avg,
+        APPROX_QUANTILES(kring.elevation_max, 2)[OFFSET(1)] AS elevation_max,
+      FROM
+        kring_cte,
+        UNNEST (kring_cte.neighbors) AS neighbor_h3
+      INNER JOIN
+        `cartobq.docs.madrid_bike_nasadem_h3` kring
+      ON
+        neighbor_h3 = kring.h3
+      GROUP BY
+        h3
+    )
+  SELECT
+    h3,
+    elevation_avg,
+    elevation_min,
+    elevation_max,
+    ABS(elevation_max - elevation_min) AS elevation_diff,
+  FROM
+    smoothing_cte
+)
