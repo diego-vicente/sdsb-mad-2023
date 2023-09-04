@@ -21,7 +21,6 @@ WHERE
       high_levels = 'accidents'
   )
 
-
 -- @block Compute the isolines for BiciMad stations
 CALL `carto-un`.carto.CREATE_ISOLINES(
   '$api_endpoint',

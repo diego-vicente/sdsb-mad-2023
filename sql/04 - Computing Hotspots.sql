@@ -18,7 +18,6 @@ CALL `carto-un`.carto.ENRICH_GRID(
   ['`$project.$dataset.madrid_bike_accidents_h3`']
 );
 
-
 -- @block Computing Getis-Ord
 CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_index_gi`
 CLUSTER BY (h3)
@@ -57,7 +56,6 @@ AS (
         cartobq.docs.madrid_bike_accidents_h3
     )) AS getis_ord
 );
-
 
 -- @block Finding joint or disjoint hotspots
 CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_accidents_vs_index_sept`

@@ -22,7 +22,7 @@ AS (
   USING (h3)
 );
 
--- Creating a Composite Index
+-- @block Creating a Composite Index
 CALL `carto-un`.carto.CREATE_SPATIAL_COMPOSITE_UNSUPERVISED(
   -- Input table (could also be a query)
   'cartobq.docs.madrid_bike_variables_h3',

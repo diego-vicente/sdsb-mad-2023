@@ -33,7 +33,6 @@ AS (
   FROM weight_cte
 );
 
-
 -- @block Find nearby bike parkings
 CALL `carto-un`.carto.CREATE_ISOLINES(
   '$api_endpoint',
@@ -184,7 +183,7 @@ AS (
 );
 
 
--- @block Enrich the grid using raster
+-- @block Extract the raster to quadbin
 CALL `carto-un`.carto.RASTER_ST_GETVALUE(
     'cartobq.docs.madrid_bike_nasadem',
     (SELECT geom FROM cartobq.docs.madrid_city_boundaries),
@@ -192,7 +191,7 @@ CALL `carto-un`.carto.RASTER_ST_GETVALUE(
     '$project.$dataset.madrid_bike_nasadem_quadbin'
 );
 
-
+-- @block Enrich the grid using raster
 CALL `carto-un`.carto.ENRICH_GRID(
   'h3',
   R'''
@@ -258,6 +257,7 @@ CALL `carto-un`.carto.ENRICH_GRID(
   ['`$project.$dataset.madrid_bike_nasadem_h3_mod2`']
 );
 
+-- @block Aggregate the partials
 CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_nasadem_h3`
 CLUSTER BY h3
 AS (
@@ -272,7 +272,7 @@ DROP TABLE `$project.$dataset.madrid_bike_nasadem_h3_mod0`;
 DROP TABLE `$project.$dataset.madrid_bike_nasadem_h3_mod1`;
 DROP TABLE `$project.$dataset.madrid_bike_nasadem_h3_mod2`;
 
-
+-- @block Using a k-ring to smooth the outliers
 CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_elevation_h3`
 CLUSTER BY h3
 AS (
