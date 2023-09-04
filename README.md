@@ -1,6 +1,6 @@
-# Advanced Cloud Native Spatial Analytics (SDS Bootcamp Madrid 2023)
+# Using SQL to Scale your Spatial Analytics
 
-**Link to the [talk slides](https://docs.google.com/presentation/d/1g8rNGBMgdS_JMkUjlE2hK6pOCu9OlJOTJCFC6mqvKrM/edit?usp=sharing)**
+**Link to the [talk slides](https://docs.google.com/presentation/d/1Sltt1x4uAY7K_bdFjuDnw-80HMSoLKehB1ffWtC8_b4/edit?usp=sharing)**
 
 This repository contains all the code referenced in the talk: the complete analysis can be executed as long as the source tables from the `cartobq.docs` dataset are available. It is important to take into account that:
 - All items stylized as `$name` are placeholders to be filled by the user. Usually refer to the desired project/dataset where you want a table to be created, but can also represent a personal endpoint or API key. This current setup is configured to work seamlessly using [SQLTools](https://github.com/mtxr/vscode-sqltools) from Visual Studio Code, but is also easy enough to replace the placeholders using other tools.
