@@ -38,7 +38,7 @@ AS (
   SELECT
     ST_UNION_AGG(geom) AS geom
   FROM
-    `cartobq.docs.madrid_bicimad_coverage_areas`
+    `$project.$dataset.madrid_bicimad_coverage_areas`
 );
 
 -- @block Find the best spots for new BiciMad stations

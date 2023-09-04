@@ -57,7 +57,7 @@ CALL `carto-un`.carto.CREATE_ISOLINES(
 
 
 -- @block Enter spatial indexes
-CREATE TABLE $project.$dataset.madrid_h3_10
+CREATE OR REPLACE TABLE $project.$dataset.madrid_h3_10
 CLUSTER BY (h3)
 AS (
   SELECT h3 FROM UNNEST (
@@ -198,8 +198,10 @@ CALL `carto-un`.carto.ENRICH_GRID(
   R'''
   SELECT 
     h3 
-  FROM cartobq.docs.madrid_h3_10
-    WHERE MOD(`carto-un`.carto.H3_STRING_TOINT(h3), 3) = 0
+  FROM
+    cartobq.docs.madrid_h3_10
+  WHERE
+    MOD(`carto-un`.carto.H3_STRING_TOINT(h3), 3) = 0
   ''',
   'h3',
   R'''

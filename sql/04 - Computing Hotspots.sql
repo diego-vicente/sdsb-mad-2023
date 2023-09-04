@@ -20,7 +20,7 @@ CALL `carto-un`.carto.ENRICH_GRID(
 
 
 -- @block Computing Getis-Ord
-CREATE TABLE `$project.$dataset.madrid_bike_index_gi`
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_index_gi`
 CLUSTER BY (h3)
 AS (
   SELECT
@@ -39,7 +39,7 @@ AS (
     )) AS getis_ord
 );
 
-CREATE TABLE `$project.$dataset.madrid_bike_accidents_gi`
+CREATE OR REPLACE TABLE TABLE `$project.$dataset.madrid_bike_accidents_gi`
 CLUSTER BY (h3)
 AS (
   SELECT
@@ -60,7 +60,7 @@ AS (
 
 
 -- @block Finding joint or disjoint hotspots
-CREATE TABLE `$project.$dataset.madrid_bike_accidents_vs_index`
+CREATE OR REPLACE TABLE `$project.$dataset.madrid_bike_accidents_vs_index_sept`
 CLUSTER BY (h3)
 AS (
   WITH
@@ -71,13 +71,14 @@ AS (
         acc.gi AS acc_gi
       FROM
         (
-          SELECT * FROM cartobq.docs.madrid_bike_index_gi
-          WHERE p_value < 0.001
+          SELECT * FROM cartobq.docs.madrid_bike_index_gi_sept
+          WHERE p_value < 0.001 AND gi > 5
         ) AS ind
       FULL OUTER JOIN
         (
-          SELECT * FROM cartobq.docs.madrid_bike_index_gi
-          WHERE p_value < 0.001
+          SELECT * FROM cartobq.docs.madrid_bike_accidents_gi
+          WHERE p_value < 0.001 AND gi > 5
+
         ) AS acc
       USING (h3)
     )
